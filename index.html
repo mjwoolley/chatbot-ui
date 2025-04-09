@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot UI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="hello-api-container">
+        <button id="hello-btn">Call Hello API</button>
+    </div>
+    
+    <div class="model-selector-container">
+        <label for="model-selector">Model:</label>
+        <select id="model-selector">
+            <option value="loading">Loading models...</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>Chatbot UI</h1>
+        </header>
+        <main>
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <div class="welcome-message">
+                        <p>Welcome to the Chatbot UI! Type a message below to start chatting.</p>
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <form id="chat-form">
+                        <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
+                        <button type="submit" id="send-btn">Send</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+        <footer>
+            <p>&copy; 2025 Chatbot UI</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
