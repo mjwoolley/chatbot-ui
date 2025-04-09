@@ -14,8 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
         prod: 'https://cjgi3jebg2.us-east-1.awsapprunner.com'
     };
     
-    // Determine which environment to use based on the current hostname
-    const baseUrl = window.location.hostname === 'localhost' ? apiUrl.dev : apiUrl.prod;
+    // For debugging - force using the local development URL
+    // This ensures we're connecting to the right server during testing
+    const baseUrl = apiUrl.dev;
+    
+    console.log('Using API base URL:', baseUrl);
     
     // Current selected model ID
     let currentModelId = null;
@@ -23,19 +26,76 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch available models from the API
     async function fetchAvailableModels() {
         try {
-            const response = await fetch(`${baseUrl}/api/models`);
+            // Log the URL we're trying to fetch
+            const modelsUrl = `${baseUrl}/api/models`;
+            console.log('Fetching models from:', modelsUrl);
+            
+            // Add explicit mode and credentials for CORS
+            const response = await fetch(modelsUrl, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                console.error('Response not OK:', response.status, response.statusText);
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
             }
             
-            const data = await response.json();
+            // Log the raw response
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+            
+            // Parse the response as JSON
+            const data = JSON.parse(responseText);
+            console.log('Parsed data:', data);
             
             // Clear the loading option
             modelSelector.innerHTML = '';
             
             // Add options for each model
-            data.models.forEach(model => {
+            if (data.models && Array.isArray(data.models)) {
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.name;
+                    modelSelector.appendChild(option);
+                });
+                
+                // Set the default selected model
+                if (data.models.length > 0) {
+                    currentModelId = data.models[0].id;
+                    // Add a system message indicating the selected model
+                    addMessage(`Using model: <strong>${data.models[0].name}</strong>`, 'system');
+                }
+            } else {
+                console.error('Invalid data format:', data);
+                throw new Error('Invalid data format received from server');
+            }
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            modelSelector.innerHTML = '<option value="">Error loading models</option>';
+            addMessage(`<strong>Error loading models:</strong> ${error.message}`, 'system');
+            
+            // As a fallback, let's provide some default models
+            addMessage('Using default models as fallback', 'system');
+            
+            // Add default models
+            const defaultModels = [
+                { id: 'anthropic.claude-3-5-sonnet-20240620-v1:0', name: 'Claude 3.5 Sonnet' },
+                { id: 'anthropic.claude-3-opus-20240229-v1:0', name: 'Claude 3 Opus' },
+                { id: 'anthropic.claude-3-sonnet-20240229-v1:0', name: 'Claude 3 Sonnet' },
+                { id: 'anthropic.claude-3-haiku-20240307-v1:0', name: 'Claude 3 Haiku' }
+            ];
+            
+            // Clear the error option
+            modelSelector.innerHTML = '';
+            
+            // Add the default models
+            defaultModels.forEach(model => {
                 const option = document.createElement('option');
                 option.value = model.id;
                 option.textContent = model.name;
@@ -43,15 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Set the default selected model
-            if (data.models.length > 0) {
-                currentModelId = data.models[0].id;
-                // Add a system message indicating the selected model
-                addMessage(`Using model: <strong>${data.models[0].name}</strong>`, 'system');
-            }
-        } catch (error) {
-            console.error('Error fetching models:', error);
-            modelSelector.innerHTML = '<option value="">Error loading models</option>';
-            addMessage(`<strong>Error loading models:</strong> ${error.message}`, 'system');
+            currentModelId = defaultModels[0].id;
         }
     }
     
